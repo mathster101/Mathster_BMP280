@@ -2,25 +2,25 @@
 #include "Wire.h"
 
 
-uint8_t BMP280_Mathew::i2c_read_byte(const uint8_t addr)
+uint8_t BMP280_Mathster::i2c_read_byte(const uint8_t addr)
 {
+	uint8_t data_byte;
 	Wire.beginTransmission(device_address);
 	Wire.write(addr);
 	Wire.endTransmission();
 	Wire.requestFrom(device_address, 1);
-	while (Wire.available() != 1);
-	; // wait till device is actually available
-	return (uint8_t)Wire.read();
+	while (Wire.available() != 1);// wait till device is actually available
+	data_byte =  (uint8_t)Wire.read();
+	return data_byte;
 }
 
-uint8_t* BMP280_Mathew::i2c_read_bytes(const uint8_t addr, uint8_t* buffer_to_fill, int num_bytes)
+uint8_t* BMP280_Mathster::i2c_read_bytes(const uint8_t addr, uint8_t* buffer_to_fill, int num_bytes)
 {
 	Wire.beginTransmission(device_address);
 	Wire.write(addr);
 	Wire.endTransmission();
 	Wire.requestFrom(device_address, num_bytes);
-	while (Wire.available() != num_bytes)
-		; // wait till device is actually available
+	while (Wire.available() != num_bytes);// wait till device is actually available
 	for (int i = 0; i < num_bytes; i++)
 	{
 		buffer_to_fill[i] = Wire.read();
@@ -28,7 +28,7 @@ uint8_t* BMP280_Mathew::i2c_read_bytes(const uint8_t addr, uint8_t* buffer_to_fi
 	return buffer_to_fill;
 }
 
-uint8_t BMP280_Mathew::i2c_write_byte(const uint8_t addr, const uint8_t data_byte)
+uint8_t BMP280_Mathster::i2c_write_byte(const uint8_t addr, const uint8_t data_byte)
 {
 	Wire.beginTransmission(device_address);
 	Wire.write(addr);
@@ -40,7 +40,7 @@ uint8_t BMP280_Mathew::i2c_write_byte(const uint8_t addr, const uint8_t data_byt
 		return false;
 }
 
-void BMP280_Mathew::initialize()
+void BMP280_Mathster::initialize()
 {
 	uint8_t buffer[24];		
 	Wire.begin();					 // no need to re init wire in main code
@@ -64,22 +64,21 @@ void BMP280_Mathew::initialize()
 	delay(50);
 }
 
-float BMP280_Mathew::get_temperature()
+float BMP280_Mathster::get_temperature()
 {
 	uint8_t buffer[3];
 	int32_t var1, var2;
 	int32_t raw_temperature, calibrated_temperature;
 	i2c_read_bytes(temp_reg_start, buffer, 3);
-
 	raw_temperature = (int32_t)((((int32_t)(buffer[0])) << 12) | (((int32_t)(buffer[1])) << 4) | (((int32_t)(buffer[2])) >> 4));
 	var1 = ((((raw_temperature >> 3) - ((int32_t)dig_T1 << 1))) * ((int32_t)dig_T2)) >> 11;
 	var2 = (((((raw_temperature >> 4) - ((int32_t)dig_T1)) * ((raw_temperature >> 4) - ((int32_t)dig_T1))) >> 12) * ((int32_t)dig_T3)) >> 14;
 	t_fine = var1 + var2;
-	calibrated_temperature = (calibrated_temperature * 5 + 128) >> 8;
+	calibrated_temperature = (t_fine * 5 + 128) >> 8;
 	return (float)calibrated_temperature / 100;
 }
 
-double BMP280_Mathew::get_pressure()
+double BMP280_Mathster::get_pressure()
 {
 	uint8_t buffer[3];
 	int32_t raw_pressure;
