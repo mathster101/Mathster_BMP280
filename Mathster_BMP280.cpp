@@ -2,37 +2,114 @@
 #include "Wire.h"
 
 
-uint8_t BMP280_Mathew::i2c_read_byte(const uint8_t addr) {
-  Wire.beginTransmission(device_address);
-  Wire.write(addr);
-  Wire.endTransmission();
-  Wire.requestFrom(device_address, 1);
-  while (Wire.available() != 1)
-    ; // wait till device is actually available
-  return (uint8_t)Wire.read();
+uint8_t BMP280_Mathew::i2c_read_byte(const uint8_t addr)
+{
+	Wire.beginTransmission(device_address);
+	Wire.write(addr);
+	Wire.endTransmission();
+	Wire.requestFrom(device_address, 1);
+	while (Wire.available() != 1);
+	; // wait till device is actually available
+	return (uint8_t)Wire.read();
 }
 
-uint8_t* BMP280_Mathew::i2c_read_bytes(const uint8_t addr, uint8_t* buffer_to_fill, int num_bytes) {
-  Wire.beginTransmission(device_address);
-  Wire.write(addr);
-  Wire.endTransmission();
-  Wire.requestFrom(device_address, num_bytes);
-  while (Wire.available() != num_bytes)
-      ; // wait till device is actually available
-  for (int i = 0; i < num_bytes; i++) {
-    buffer_to_fill[i] = Wire.read();
-  }
-  return buffer_to_fill;
+uint8_t* BMP280_Mathew::i2c_read_bytes(const uint8_t addr, uint8_t* buffer_to_fill, int num_bytes)
+{
+	Wire.beginTransmission(device_address);
+	Wire.write(addr);
+	Wire.endTransmission();
+	Wire.requestFrom(device_address, num_bytes);
+	while (Wire.available() != num_bytes)
+		; // wait till device is actually available
+	for (int i = 0; i < num_bytes; i++)
+	{
+		buffer_to_fill[i] = Wire.read();
+	}
+	return buffer_to_fill;
 }
 
-uint8_t BMP280_Mathew::i2c_write_byte(const uint8_t addr, const uint8_t data_byte) {
-  Wire.beginTransmission(device_address);
-  Wire.write(addr);
-  Wire.write(data_byte);
-  Wire.endTransmission();
-  if (i2c_read_byte(addr) == data_byte)
-    return true;
-  else
-    return false;
+uint8_t BMP280_Mathew::i2c_write_byte(const uint8_t addr, const uint8_t data_byte)
+{
+	Wire.beginTransmission(device_address);
+	Wire.write(addr);
+	Wire.write(data_byte);
+	Wire.endTransmission();
+	if (i2c_read_byte(addr) == data_byte)
+		return true;
+	else
+		return false;
+}
+
+void BMP280_Mathew::initialize()
+{
+	uint8_t buffer[24];		
+	Wire.begin();					 // no need to re init wire in main code
+	Wire.setClock(400000);	// BMP280 supports 400kHz i2c
+	uint8_t default_control = i2c_read_byte(ctrl_meas);
+	default_control = 0b01001011;
+	i2c_write_byte(ctrl_meas, default_control);
+	i2c_read_bytes(calibration_reg_start, buffer, 24);
+	dig_T1 = (buffer[1] << 8 | buffer[0]);
+	dig_T2 = (buffer[3] << 8 | buffer[2]);
+	dig_T3 = (buffer[5] << 8 | buffer[4]);
+	dig_P1 = (buffer[7] << 8 | buffer[6]);
+	dig_P2 = (buffer[9] << 8 | buffer[8]);
+	dig_P3 = (buffer[11] << 8 | buffer[10]);
+	dig_P4 = (buffer[13] << 8 | buffer[12]);
+	dig_P5 = (buffer[15] << 8 | buffer[14]);
+	dig_P6 = (buffer[17] << 8 | buffer[16]);
+	dig_P7 = (buffer[19] << 8 | buffer[18]);
+	dig_P8 = (buffer[21] << 8 | buffer[20]);
+	dig_P9 = (buffer[23] << 8 | buffer[22]);
+	delay(50);
+}
+
+float BMP280_Mathew::get_temperature()
+{
+	uint8_t buffer[3];
+	int32_t var1, var2;
+	int32_t raw_temperature, calibrated_temperature;
+	i2c_read_bytes(temp_reg_start, buffer, 3);
+
+	raw_temperature = (int32_t)((((int32_t)(buffer[0])) << 12) | (((int32_t)(buffer[1])) << 4) | (((int32_t)(buffer[2])) >> 4));
+	var1 = ((((raw_temperature >> 3) - ((int32_t)dig_T1 << 1))) * ((int32_t)dig_T2)) >> 11;
+	var2 = (((((raw_temperature >> 4) - ((int32_t)dig_T1)) * ((raw_temperature >> 4) - ((int32_t)dig_T1))) >> 12) * ((int32_t)dig_T3)) >> 14;
+	t_fine = var1 + var2;
+	calibrated_temperature = (calibrated_temperature * 5 + 128) >> 8;
+	return (float)calibrated_temperature / 100;
+}
+
+double BMP280_Mathew::get_pressure()
+{
+	uint8_t buffer[3];
+	int32_t raw_pressure;
+	int32_t var1, var2;
+	uint32_t calibrated_pressure;
+	i2c_read_bytes(press_reg_start, buffer, 3);
+	
+	raw_pressure = (int32_t)((((int32_t)(buffer[0])) << 12) | (((int32_t)(buffer[1])) << 4) | (((int32_t)(buffer[2])) >> 4));
+	var1 = (((int32_t)t_fine) >> 1) - (int32_t)64000;
+	var2 = (((var1 >> 2) * (var1 >> 2)) >> 11) * ((int32_t)dig_P6);
+	var2 = var2 + ((var1 * ((int32_t)dig_P5)) << 1);
+	var2 = (var2 >> 2) + (((int32_t)dig_P4) << 16);
+	var1 = (((dig_P3 * (((var1 >> 2) * (var1 >> 2)) >> 13)) >> 3) + ((((int32_t)dig_P2) * var1) >> 1)) >> 18;
+	var1 = ((((32768 + var1)) * ((int32_t)dig_P1)) >> 15);
+	if (var1 == 0) {
+	return 0;	// error case
+	}
+	
+	calibrated_pressure = (((uint32_t)(((int32_t)1048576) - raw_pressure) - (var2 >> 12))) * 3125;
+	if (calibrated_pressure < 0x80000000)
+	{
+	calibrated_pressure = (calibrated_pressure << 1) / ((uint32_t)var1);
+	}
+	else
+	{
+	calibrated_pressure = (calibrated_pressure / (uint32_t)var1) * 2;
+	}
+	var1 = (((int32_t)dig_P9) * ((int32_t)(((calibrated_pressure >> 3) * (calibrated_pressure >> 3)) >> 13))) >> 12;
+	var2 = (((int32_t)(calibrated_pressure >> 2)) * ((int32_t)dig_P8)) >> 13;
+	calibrated_pressure = (uint32_t)((int32_t)calibrated_pressure + ((var1 + var2 + dig_P7) >> 4));
+	return (double)calibrated_pressure; // pascals
 }
 
