@@ -36,8 +36,8 @@ uint8_t BMP280_Mathster::i2c_write_byte(const uint8_t addr, const uint8_t data_b
 	Wire.endTransmission();
 	if (i2c_read_byte(addr) == data_byte)
 		return true;
-	else
-		return false;
+	
+	return false;
 }
 
 void BMP280_Mathster::initialize()
@@ -50,11 +50,11 @@ void BMP280_Mathster::initialize()
 	i2c_write_byte(ctrl_meas, default_control);
 	i2c_read_bytes(calibration_reg_start, buffer, 24);
 	
-	dig_T1 = (buffer[1] << 8 | buffer[0]);
-	dig_T2 = (buffer[3] << 8 | buffer[2]);
-	dig_T3 = (buffer[5] << 8 | buffer[4]);
-	dig_P1 = (buffer[7] << 8 | buffer[6]);
-	dig_P2 = (buffer[9] << 8 | buffer[8]);
+	dig_T1 = (buffer[1] << 8  | buffer[0]);
+	dig_T2 = (buffer[3] << 8  | buffer[2]);
+	dig_T3 = (buffer[5] << 8  | buffer[4]);
+	dig_P1 = (buffer[7] << 8  | buffer[6]);
+	dig_P2 = (buffer[9] << 8  | buffer[8]);
 	dig_P3 = (buffer[11] << 8 | buffer[10]);
 	dig_P4 = (buffer[13] << 8 | buffer[12]);
 	dig_P5 = (buffer[15] << 8 | buffer[14]);
@@ -208,4 +208,15 @@ void BMP280_Mathster::sleep()
 	current_val &= 0b11111100;
 	Serial.println(current_val,BIN);
 	i2c_write_byte(ctrl_meas, current_val);
+}
+
+void BMP280_Mathster::register_dump()
+{
+	uint8_t buffer[100];
+	uint8_t start = 0x88, bytes = 100;
+	i2c_read_bytes(start, buffer, bytes);
+	for (int i = 0; i < bytes; i++)
+	{
+		Serial.print("Register : ");Serial.print(start + i,HEX);Serial.print("    val : ");Serial.println(buffer[i],HEX);
+	}
 }
