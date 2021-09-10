@@ -88,6 +88,7 @@ double BMP280_Mathster::get_pressure()
 	int32_t raw_pressure;
 	int32_t var1, var2;
 	uint32_t calibrated_pressure;
+	get_temperature();//change later
 	i2c_read_bytes(press_reg_start, buffer, 3);
 	
 	raw_pressure = (int32_t)((((int32_t)(buffer[0])) << 12) | (((int32_t)(buffer[1])) << 4) | (((int32_t)(buffer[2])) >> 4));
@@ -141,5 +142,70 @@ void BMP280_Mathster::set_temperature_oversampling(uint8_t option)
 		current_val = (0b00011111 & current_val) | 0b11100000;//x16
 		break;
 	}
+	i2c_write_byte(ctrl_meas, current_val);
+}
+
+void BMP280_Mathster::set_pressure_oversampling(uint8_t option)
+{
+	uint8_t current_val;
+	current_val = i2c_read_byte(ctrl_meas);
+	switch (option)
+	{
+	case 1:
+		current_val = 0b11100011 & current_val; // press sensor off
+		break;
+	case 2:
+		current_val = (0b11100011 & current_val) | 0b00000100; //x1
+		break;
+	case 3:
+		current_val = (0b11100011 & current_val) | 0b00001000;//x2
+		break;
+	case 4:
+		current_val = (0b11100011 & current_val) | 0b00001100;//x4
+		break;
+	case 5:
+		current_val = (0b11100011 & current_val) | 0b00010000;//x8
+		break;
+	default:
+		current_val = (0b11100011 & current_val) | 0b00011100;//x16
+		break;
+	}
+	i2c_write_byte(ctrl_meas, current_val);
+}
+
+void BMP280_Mathster::set_iir_coefficients(uint8_t option)
+{
+	uint8_t current_val;
+	current_val = i2c_read_byte(config);
+	switch (option)
+	{
+	case 1:
+		current_val = 0b11100011 & current_val; // iir filter off
+		break;
+	case 2:
+		current_val = (0b11100011 & current_val) | 0b00000100; //2
+		break;
+	case 3:
+		current_val = (0b11100011 & current_val) | 0b00001000;//4
+		break;
+	case 4:
+		current_val = (0b11100011 & current_val) | 0b00001100;//8
+		break;
+	case 5:
+		current_val = (0b11100011 & current_val) | 0b00010000;//16
+		break;
+	default:
+		current_val = (0b11100011 & current_val) | 0b00011100;//x16
+		break;
+	}
+	i2c_write_byte(config, current_val);
+}
+
+void BMP280_Mathster::sleep()
+{
+	uint8_t current_val;
+	current_val = i2c_read_byte(ctrl_meas);
+	current_val &= 0b11111100;
+	Serial.println(current_val,BIN);
 	i2c_write_byte(ctrl_meas, current_val);
 }

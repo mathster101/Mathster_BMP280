@@ -9,7 +9,7 @@ public:
   float get_temperature();
   void set_temperature_oversampling(uint8_t option);
   void set_pressure_oversampling(uint8_t option);
-  void set_iir_coeffecients(uint8_t option);
+  void set_iir_coefficients(uint8_t option);
   void sleep();
   void register_dump();
 
