@@ -43,12 +43,13 @@ uint8_t BMP280_Mathster::i2c_write_byte(const uint8_t addr, const uint8_t data_b
 void BMP280_Mathster::initialize()
 {
 	uint8_t buffer[24];		
-	Wire.begin();					 // no need to re init wire in main code
+	Wire.begin();			// no need to re init wire in main code
 	Wire.setClock(400000);	// BMP280 supports 400kHz i2c
 	uint8_t default_control = i2c_read_byte(ctrl_meas);
 	default_control = 0b01001011;
 	i2c_write_byte(ctrl_meas, default_control);
 	i2c_read_bytes(calibration_reg_start, buffer, 24);
+	
 	dig_T1 = (buffer[1] << 8 | buffer[0]);
 	dig_T2 = (buffer[3] << 8 | buffer[2]);
 	dig_T3 = (buffer[5] << 8 | buffer[4]);
@@ -62,6 +63,8 @@ void BMP280_Mathster::initialize()
 	dig_P8 = (buffer[21] << 8 | buffer[20]);
 	dig_P9 = (buffer[23] << 8 | buffer[22]);
 	delay(50);
+	get_temperature();// initializes t_fine
+
 }
 
 float BMP280_Mathster::get_temperature()
@@ -70,6 +73,7 @@ float BMP280_Mathster::get_temperature()
 	int32_t var1, var2;
 	int32_t raw_temperature, calibrated_temperature;
 	i2c_read_bytes(temp_reg_start, buffer, 3);
+
 	raw_temperature = (int32_t)((((int32_t)(buffer[0])) << 12) | (((int32_t)(buffer[1])) << 4) | (((int32_t)(buffer[2])) >> 4));
 	var1 = ((((raw_temperature >> 3) - ((int32_t)dig_T1 << 1))) * ((int32_t)dig_T2)) >> 11;
 	var2 = (((((raw_temperature >> 4) - ((int32_t)dig_T1)) * ((raw_temperature >> 4) - ((int32_t)dig_T1))) >> 12) * ((int32_t)dig_T3)) >> 14;
@@ -112,3 +116,30 @@ double BMP280_Mathster::get_pressure()
 	return (double)calibrated_pressure; // pascals
 }
 
+void BMP280_Mathster::set_temperature_oversampling(uint8_t option)
+{
+	uint8_t current_val;
+	current_val = i2c_read_byte(ctrl_meas);
+	switch (option)
+	{
+	case 1:
+		current_val = 0b00011111 & current_val; // temp sensor off
+		break;
+	case 2:
+		current_val = (0b00011111 & current_val) | 0b00100000; //x1
+		break;
+	case 3:
+		current_val = (0b00011111 & current_val) | 0b01000000;//x2
+		break;
+	case 4:
+		current_val = (0b00011111 & current_val) | 0b01100000;//x4
+		break;
+	case 5:
+		current_val = (0b00011111 & current_val) | 0b10000000;//x8
+		break;
+	default:
+		current_val = (0b00011111 & current_val) | 0b11100000;//x16
+		break;
+	}
+	i2c_write_byte(ctrl_meas, current_val);
+}
