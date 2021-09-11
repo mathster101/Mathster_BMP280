@@ -99,8 +99,9 @@ double BMP280_Mathster::get_pressure()
 	var2 = (var2 >> 2) + (((int32_t)dig_P4) << 16);
 	var1 = (((dig_P3 * (((var1 >> 2) * (var1 >> 2)) >> 13)) >> 3) + ((((int32_t)dig_P2) * var1) >> 1)) >> 18;
 	var1 = ((((32768 + var1)) * ((int32_t)dig_P1)) >> 15);
-	if (var1 == 0) {
-	return 0;	// error case
+	if (var1 == 0)
+	{
+		return 0;	// error case
 	}
 	
 	calibrated_pressure = (((uint32_t)(((int32_t)1048576) - raw_pressure) - (var2 >> 12))) * 3125;
