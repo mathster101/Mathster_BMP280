@@ -1,5 +1,6 @@
 #include "Mathster_BMP280.h"
 #include "Wire.h"
+#include<math.h>
 
 
 uint8_t BMP280_Mathster::i2c_read_byte(const uint8_t addr)
@@ -88,7 +89,7 @@ double BMP280_Mathster::get_pressure()
 	int32_t raw_pressure;
 	int32_t var1, var2;
 	uint32_t calibrated_pressure;
-	get_temperature();//change later
+	temperature = get_temperature();//change later
 	i2c_read_bytes(press_reg_start, buffer, 3);
 	
 	raw_pressure = (int32_t)((((int32_t)(buffer[0])) << 12) | (((int32_t)(buffer[1])) << 4) | (((int32_t)(buffer[2])) >> 4));
@@ -115,6 +116,20 @@ double BMP280_Mathster::get_pressure()
 	var2 = (((int32_t)(calibrated_pressure >> 2)) * ((int32_t)dig_P8)) >> 13;
 	calibrated_pressure = (uint32_t)((int32_t)calibrated_pressure + ((var1 + var2 + dig_P7) >> 4));
 	return (double)calibrated_pressure; // pascals
+}
+
+float BMP280_Mathster::get_altitude()
+{
+	double R = 8.3143;					   // universal gas constant
+	double M = 0.02896;                    // molar mass of air
+	float g  = 9.807;                      // grav. accel.
+	double P0 = 101325;                    // sea level pressure (Pa)
+	double P = get_pressure();             // current pressure
+	double T = 273.15 + temperature;       // temperature (kelvin)
+	float altitude;
+	altitude = -1 * ((R * T) / (M * g)) * log(P / P0);
+	
+	return altitude;
 }
 
 void BMP280_Mathster::set_temperature_oversampling(uint8_t option)
@@ -208,6 +223,8 @@ void BMP280_Mathster::sleep()
 	current_val &= 0b11111100;
 	Serial.println(current_val,BIN);
 	i2c_write_byte(ctrl_meas, current_val);
+	set_pressure_oversampling(1);
+	set_temperature_oversampling(1);
 }
 
 void BMP280_Mathster::register_dump()

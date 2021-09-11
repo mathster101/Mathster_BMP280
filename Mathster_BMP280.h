@@ -7,6 +7,7 @@ public:
   void initialize();
   double get_pressure();
   float get_temperature();
+  float get_altitude();
   void set_temperature_oversampling(uint8_t option);
   void set_pressure_oversampling(uint8_t option);
   void set_iir_coefficients(uint8_t option);
@@ -23,6 +24,7 @@ private:
   uint8_t calibration_reg_start = 0x88;                                                    //till and including 0x9F ,i.e. 24 bytes
   int32_t dig_T2, dig_T3, dig_P2, dig_P3, dig_P4, dig_P5, dig_P6, dig_P7, dig_P8, dig_P9;  //calibration
   int32_t t_fine;                                                                          //internal use only
+  float temperature;
 
   uint8_t i2c_read_byte(const uint8_t addr);
   uint8_t* i2c_read_bytes(const uint8_t addr, uint8_t* buffer_to_fill, int num_bytes);
