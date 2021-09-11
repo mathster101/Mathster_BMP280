@@ -1,6 +1,6 @@
 #include "Mathster_BMP280.h"
 #include "Wire.h"
-#include<math.h>
+#include <math.h>
 
 
 uint8_t BMP280_Mathster::i2c_read_byte(const uint8_t addr)
@@ -89,7 +89,7 @@ double BMP280_Mathster::get_pressure()
 	int32_t raw_pressure;
 	int32_t var1, var2;
 	uint32_t calibrated_pressure;
-	temperature = get_temperature();//change later
+	temp_internal = get_temperature();//change later
 	i2c_read_bytes(press_reg_start, buffer, 3);
 	
 	raw_pressure = (int32_t)((((int32_t)(buffer[0])) << 12) | (((int32_t)(buffer[1])) << 4) | (((int32_t)(buffer[2])) >> 4));
@@ -125,9 +125,9 @@ float BMP280_Mathster::get_altitude()
 	float g  = 9.807;                      // grav. accel.
 	double P0 = 101325;                    // sea level pressure (Pa)
 	double P = get_pressure();             // current pressure
-	double T = 273.15 + temperature;       // temperature (kelvin)
+	double T = 273.15 + temp_internal;	   // temperature (kelvin)
 	float altitude;
-	altitude = -1 * ((R * T) / (M * g)) * log(P / P0);
+	altitude = -1 * ((R * T) / (M * g)) * log(P / P0); // barometric formula
 	
 	return altitude;
 }
