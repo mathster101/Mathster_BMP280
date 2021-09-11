@@ -83,7 +83,7 @@ float BMP280_Mathster::get_temperature()
 	int32_t var1, var2;
 	int32_t raw_temperature, calibrated_temperature;
 	i2c_read_bytes(temp_reg_start, buffer, 3);
-
+	// Calculations are from Bosch SensorTec
 	raw_temperature = (int32_t)((((int32_t)(buffer[0])) << 12) | (((int32_t)(buffer[1])) << 4) | (((int32_t)(buffer[2])) >> 4));
 	var1 = ((((raw_temperature >> 3) - ((int32_t)dig_T1 << 1))) * ((int32_t)dig_T2)) >> 11;
 	var2 = (((((raw_temperature >> 4) - ((int32_t)dig_T1)) * ((raw_temperature >> 4) - ((int32_t)dig_T1))) >> 12) * ((int32_t)dig_T3)) >> 14;
@@ -100,7 +100,7 @@ double BMP280_Mathster::get_pressure()
 	uint32_t calibrated_pressure;
 	temp_internal = get_temperature();//change later
 	i2c_read_bytes(press_reg_start, buffer, 3);
-	
+	// Calculations are from Bosch SensorTec
 	raw_pressure = (int32_t)((((int32_t)(buffer[0])) << 12) | (((int32_t)(buffer[1])) << 4) | (((int32_t)(buffer[2])) >> 4));
 	var1 = (((int32_t)t_fine) >> 1) - (int32_t)64000;
 	var2 = (((var1 >> 2) * (var1 >> 2)) >> 11) * ((int32_t)dig_P6);
