@@ -231,7 +231,6 @@ void BMP280_Mathster::sleep()
 	uint8_t current_val;
 	current_val = i2c_read_byte(ctrl_meas);
 	current_val &= 0b11111100;
-	Serial.println(current_val,BIN);
 	i2c_write_byte(ctrl_meas, current_val);
 	set_pressure_oversampling(1);
 	set_temperature_oversampling(1);
