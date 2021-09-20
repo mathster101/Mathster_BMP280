@@ -139,7 +139,7 @@ float BMP280_Mathster::get_altitude()
 {
 	float altitude;
 	double P0 = 101325;                    // sea level pressure (Pa)
-	altitude = barometric_constant * log(P / P0); // barometric formula	
+	altitude = barometric_constant * log(get_pressure() / P0); // barometric formula	
 	return altitude;
 }
 
