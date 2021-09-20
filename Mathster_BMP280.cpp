@@ -74,6 +74,15 @@ void BMP280_Mathster::initialize()
 	delay(50);
 	get_temperature();// initializes t_fine
 
+	//calculate constant for altitude calculations
+	double R = 8.3143;					   // universal gas constant
+	double M = 0.02896;                    // molar mass of air
+	float g  = 9.807;                      // grav. accel.
+	double P0 = 101325;                    // sea level pressure (Pa)
+	double P = get_pressure();             // current pressure
+	double T = 273.15 + temp_internal;	   // temperature (kelvin)
+
+	barometric_constant = -1 * ((R * T) / (M * g));
 }
 
 float BMP280_Mathster::get_temperature()
@@ -129,15 +138,8 @@ double BMP280_Mathster::get_pressure()
 
 float BMP280_Mathster::get_altitude()
 {
-	double R = 8.3143;					   // universal gas constant
-	double M = 0.02896;                    // molar mass of air
-	float g  = 9.807;                      // grav. accel.
-	double P0 = 101325;                    // sea level pressure (Pa)
-	double P = get_pressure();             // current pressure
-	double T = 273.15 + temp_internal;	   // temperature (kelvin)
 	float altitude;
-	altitude = -1 * ((R * T) / (M * g)) * log(P / P0); // barometric formula
-	
+	altitude = barometric_constant * log(P / P0); // barometric formula	
 	return altitude;
 }
 

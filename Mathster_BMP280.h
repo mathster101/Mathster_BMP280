@@ -34,6 +34,7 @@ private:
   int16_t dig_T2, dig_T3, dig_P2, dig_P3, dig_P4, dig_P5, dig_P6, dig_P7, dig_P8, dig_P9;  //calibration
   int32_t t_fine;                                                                          //internal use only
   int temp_internal;                                                                       //internal use only
+  float barometric_constant;                                                               //for altitude calculations;
   uint8_t i2c_read_byte(const uint8_t addr);
   uint8_t* i2c_read_bytes(const uint8_t addr, uint8_t* buffer_to_fill, int num_bytes);
   uint8_t i2c_write_byte(const uint8_t addr, const uint8_t data_byte);
