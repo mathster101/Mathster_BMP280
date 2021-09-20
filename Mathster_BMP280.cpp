@@ -59,7 +59,6 @@ void BMP280_Mathster::initialize()
 	default_control = 0b01001011;
 	i2c_write_byte(ctrl_meas, default_control);
 	i2c_read_bytes(calibration_reg_start, buffer, 24);
-	
 	dig_T1 = (buffer[1] << 8  | buffer[0]);
 	dig_T2 = (buffer[3] << 8  | buffer[2]);
 	dig_T3 = (buffer[5] << 8  | buffer[4]);
