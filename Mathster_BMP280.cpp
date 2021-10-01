@@ -15,10 +15,10 @@
 uint8_t BMP280_Mathster::i2c_read_byte(const uint8_t addr)
 {
 	uint8_t data_byte;
-	Wire.beginTransmission(device_address);
+	Wire.beginTransmission(DEVICE_ADDRESS);
 	Wire.write(addr);
 	Wire.endTransmission();
-	Wire.requestFrom(device_address, 1);
+	Wire.requestFrom(DEVICE_ADDRESS, 1);
 	while (Wire.available() != 1);// wait till device is actually available
 	data_byte =  (uint8_t)Wire.read();
 	return data_byte;
@@ -26,10 +26,10 @@ uint8_t BMP280_Mathster::i2c_read_byte(const uint8_t addr)
 
 uint8_t* BMP280_Mathster::i2c_read_bytes(const uint8_t addr, uint8_t* buffer_to_fill, int num_bytes)
 {
-	Wire.beginTransmission(device_address);
+	Wire.beginTransmission(DEVICE_ADDRESS);
 	Wire.write(addr);
 	Wire.endTransmission();
-	Wire.requestFrom(device_address, num_bytes);
+	Wire.requestFrom(DEVICE_ADDRESS, num_bytes);
 	while (Wire.available() != num_bytes);// wait till device is actually available
 	for (int i = 0; i < num_bytes; i++)
 	{
@@ -40,7 +40,7 @@ uint8_t* BMP280_Mathster::i2c_read_bytes(const uint8_t addr, uint8_t* buffer_to_
 
 uint8_t BMP280_Mathster::i2c_write_byte(const uint8_t addr, const uint8_t data_byte)
 {
-	Wire.beginTransmission(device_address);
+	Wire.beginTransmission(DEVICE_ADDRESS);
 	Wire.write(addr);
 	Wire.write(data_byte);
 	Wire.endTransmission();
@@ -55,10 +55,10 @@ void BMP280_Mathster::initialize()
 	uint8_t buffer[24];		
 	Wire.begin();			// no need to re init wire in main code
 	Wire.setClock(400000);	// BMP280 supports 400kHz i2c
-	uint8_t default_control = i2c_read_byte(ctrl_meas);
+	uint8_t default_control = i2c_read_byte(CTRL_MEAS);
 	default_control = 0b01001011;
-	i2c_write_byte(ctrl_meas, default_control);
-	i2c_read_bytes(calibration_reg_start, buffer, 24);
+	i2c_write_byte(CTRL_MEAS, default_control);
+	i2c_read_bytes(CALIBRATION_REG_START, buffer, 24);
 	dig_T1 = (buffer[1] << 8  | buffer[0]);
 	dig_T2 = (buffer[3] << 8  | buffer[2]);
 	dig_T3 = (buffer[5] << 8  | buffer[4]);
@@ -89,7 +89,7 @@ float BMP280_Mathster::get_temperature()
 	uint8_t buffer[3];
 	int32_t var1, var2;
 	int32_t raw_temperature, calibrated_temperature;
-	i2c_read_bytes(temp_reg_start, buffer, 3);
+	i2c_read_bytes(TEMP_REG_START, buffer, 3);
 	// Calculations are from Bosch SensorTec
 	raw_temperature = (int32_t)((((int32_t)(buffer[0])) << 12) | (((int32_t)(buffer[1])) << 4) | (((int32_t)(buffer[2])) >> 4));
 	var1 = ((((raw_temperature >> 3) - ((int32_t)dig_T1 << 1))) * ((int32_t)dig_T2)) >> 11;
@@ -106,7 +106,7 @@ double BMP280_Mathster::get_pressure()
 	int32_t var1, var2;
 	uint32_t calibrated_pressure;
 	temp_internal = get_temperature();//change later
-	i2c_read_bytes(press_reg_start, buffer, 3);
+	i2c_read_bytes(PRESS_REG_START, buffer, 3);
 	// Calculations are from Bosch SensorTec
 	raw_pressure = (int32_t)((((int32_t)(buffer[0])) << 12) | (((int32_t)(buffer[1])) << 4) | (((int32_t)(buffer[2])) >> 4));
 	var1 = (((int32_t)t_fine) >> 1) - (int32_t)64000;
@@ -146,7 +146,7 @@ float BMP280_Mathster::get_altitude()
 void BMP280_Mathster::set_temperature_oversampling(uint8_t option)
 {
 	uint8_t current_val;
-	current_val = i2c_read_byte(ctrl_meas);
+	current_val = i2c_read_byte(CTRL_MEAS);
 	switch (option)
 	{
 	case 1:
@@ -168,13 +168,13 @@ void BMP280_Mathster::set_temperature_oversampling(uint8_t option)
 		current_val = (0b00011111 & current_val) | 0b11100000;//x16
 		break;
 	}
-	i2c_write_byte(ctrl_meas, current_val);
+	i2c_write_byte(CTRL_MEAS, current_val);
 }
 
 void BMP280_Mathster::set_pressure_oversampling(uint8_t option)
 {
 	uint8_t current_val;
-	current_val = i2c_read_byte(ctrl_meas);
+	current_val = i2c_read_byte(CTRL_MEAS);
 	switch (option)
 	{
 	case 1:
@@ -196,13 +196,13 @@ void BMP280_Mathster::set_pressure_oversampling(uint8_t option)
 		current_val = (0b11100011 & current_val) | 0b00011100;//x16
 		break;
 	}
-	i2c_write_byte(ctrl_meas, current_val);
+	i2c_write_byte(CTRL_MEAS, current_val);
 }
 
 void BMP280_Mathster::set_iir_coefficients(uint8_t option)
 {
 	uint8_t current_val;
-	current_val = i2c_read_byte(config);
+	current_val = i2c_read_byte(CONFIG);
 	switch (option)
 	{
 	case 1:
@@ -224,15 +224,15 @@ void BMP280_Mathster::set_iir_coefficients(uint8_t option)
 		current_val = (0b11100011 & current_val) | 0b00011100;//x16
 		break;
 	}
-	i2c_write_byte(config, current_val);
+	i2c_write_byte(CONFIG, current_val);
 }
 
 void BMP280_Mathster::sleep()
 {
 	uint8_t current_val;
-	current_val = i2c_read_byte(ctrl_meas);
+	current_val = i2c_read_byte(CTRL_MEAS);
 	current_val &= 0b11111100;
-	i2c_write_byte(ctrl_meas, current_val);
+	i2c_write_byte(CTRL_MEAS, current_val);
 	set_pressure_oversampling(1);
 	set_temperature_oversampling(1);
 }
