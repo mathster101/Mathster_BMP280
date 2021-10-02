@@ -6,9 +6,9 @@
 * Thanks to Bosch SensorTec for calculation details [https://github.com/BoschSensortec/BMP280_driver]
 */
 
-
 #include "Arduino.h"
-#include "Wire.h"
+#include <Wire.h>
+#include <math.h>
 
 #define DEVICE_ADDRESS 0x76
 #define CTRL_MEAS 0xF4

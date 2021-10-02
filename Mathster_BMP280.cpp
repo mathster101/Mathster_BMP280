@@ -8,9 +8,6 @@
 
 
 #include "Mathster_BMP280.h"
-#include "Wire.h"
-#include <math.h>
-
 
 uint8_t BMP280_Mathster::i2c_read_byte(const uint8_t addr)
 {
@@ -60,6 +57,7 @@ void BMP280_Mathster::initialize()
 	set_temperature_oversampling(4);
 	set_pressure_oversampling(2);
 	set_iir_coefficients(1); // turn off
+
 	i2c_read_bytes(CALIBRATION_REG_START, buffer, 24);
 	dig_T1 = (buffer[1] << 8  | buffer[0]);
 	dig_T2 = (buffer[3] << 8  | buffer[2]);
