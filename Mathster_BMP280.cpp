@@ -57,8 +57,8 @@ void BMP280_Mathster::initialize()
 	uint8_t default_control = i2c_read_byte(CTRL_MEAS);
 	default_control |= 0b00000011;
 	i2c_write_byte(CTRL_MEAS, default_control);
-	set_temperature_oversampling(1);
-	set_pressure_oversampling(1);
+	set_temperature_oversampling(4);
+	set_pressure_oversampling(2);
 	i2c_read_bytes(CALIBRATION_REG_START, buffer, 24);
 	dig_T1 = (buffer[1] << 8  | buffer[0]);
 	dig_T2 = (buffer[3] << 8  | buffer[2]);
