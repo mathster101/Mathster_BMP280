@@ -20,14 +20,14 @@
 class BMP280_Mathster {
 public:
   void initialize();
-  double get_pressure();
+  float get_pressure();
   float get_temperature();
   float get_altitude();
   void set_temperature_oversampling(uint8_t option);
   void set_pressure_oversampling(uint8_t option);
   void set_iir_coefficients(uint8_t option);
   void sleep();
-  void register_dump();
+  void calibration_dump();
 
 private:
   uint16_t dig_T1, dig_P1;                                                                 //calibration
@@ -36,7 +36,7 @@ private:
   int temp_internal;                                                                       //internal use only
   float barometric_constant;                                                               //for altitude calculations;
   uint8_t i2c_read_byte(const uint8_t addr);
-  uint8_t* i2c_read_bytes(const uint8_t addr, uint8_t* buffer_to_fill, int num_bytes);
-  uint8_t i2c_write_byte(const uint8_t addr, const uint8_t data_byte);
+  void i2c_read_bytes(const uint8_t addr, uint8_t* buffer_to_fill, int num_bytes);
+  bool i2c_write_byte(const uint8_t addr, const uint8_t data_byte);
 };
 

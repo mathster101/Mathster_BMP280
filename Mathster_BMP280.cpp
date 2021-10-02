@@ -24,7 +24,7 @@ uint8_t BMP280_Mathster::i2c_read_byte(const uint8_t addr)
 	return data_byte;
 }
 
-uint8_t* BMP280_Mathster::i2c_read_bytes(const uint8_t addr, uint8_t* buffer_to_fill, int num_bytes)
+void BMP280_Mathster::i2c_read_bytes(const uint8_t addr, uint8_t* buffer_to_fill, int num_bytes)
 {
 	Wire.beginTransmission(DEVICE_ADDRESS);
 	Wire.write(addr);
@@ -35,10 +35,9 @@ uint8_t* BMP280_Mathster::i2c_read_bytes(const uint8_t addr, uint8_t* buffer_to_
 	{
 		buffer_to_fill[i] = Wire.read();
 	}
-	return buffer_to_fill;
 }
 
-uint8_t BMP280_Mathster::i2c_write_byte(const uint8_t addr, const uint8_t data_byte)
+bool BMP280_Mathster::i2c_write_byte(const uint8_t addr, const uint8_t data_byte)
 {
 	Wire.beginTransmission(DEVICE_ADDRESS);
 	Wire.write(addr);
@@ -56,8 +55,10 @@ void BMP280_Mathster::initialize()
 	Wire.begin();			// no need to re init wire in main code
 	Wire.setClock(400000);	// BMP280 supports 400kHz i2c
 	uint8_t default_control = i2c_read_byte(CTRL_MEAS);
-	default_control = 0b01001011;
+	default_control |= 0b00000011;
 	i2c_write_byte(CTRL_MEAS, default_control);
+	set_temperature_oversampling(1);
+	set_pressure_oversampling(1);
 	i2c_read_bytes(CALIBRATION_REG_START, buffer, 24);
 	dig_T1 = (buffer[1] << 8  | buffer[0]);
 	dig_T2 = (buffer[3] << 8  | buffer[2]);
@@ -72,7 +73,6 @@ void BMP280_Mathster::initialize()
 	dig_P8 = (buffer[21] << 8 | buffer[20]);
 	dig_P9 = (buffer[23] << 8 | buffer[22]);
 	delay(50);
-	get_temperature();// initializes t_fine
 
 	//calculate constant for altitude calculations
 	double R = 8.3143;					   // universal gas constant
@@ -99,7 +99,7 @@ float BMP280_Mathster::get_temperature()
 	return (float)calibrated_temperature / 100;
 }
 
-double BMP280_Mathster::get_pressure()
+float BMP280_Mathster::get_pressure()
 {
 	uint8_t buffer[3];
 	int32_t raw_pressure;
@@ -229,6 +229,9 @@ void BMP280_Mathster::set_iir_coefficients(uint8_t option)
 
 void BMP280_Mathster::sleep()
 {
+	/*
+	* Doesn't work right now
+	*/
 	uint8_t current_val;
 	current_val = i2c_read_byte(CTRL_MEAS);
 	current_val &= 0b11111100;
@@ -237,13 +240,31 @@ void BMP280_Mathster::sleep()
 	set_temperature_oversampling(1);
 }
 
-void BMP280_Mathster::register_dump()
+void BMP280_Mathster::calibration_dump()
 {
-	uint8_t buffer[100];
-	uint8_t start = 0x88, bytes = 100;
-	i2c_read_bytes(start, buffer, bytes);
-	for (int i = 0; i < bytes; i++)
-	{
-		Serial.print("Register : ");Serial.print(start + i,HEX);Serial.print("    val : ");Serial.println(buffer[i],HEX);
-	}
+	Serial.print("dig_T1 = ");
+	Serial.println(dig_T1);
+	Serial.print("dig_T2 = ");
+	Serial.println(dig_T2);
+	Serial.print("dig_T3 = ");
+	Serial.println(dig_T3);
+	Serial.print("dig_P1 = ");
+	Serial.println(dig_P1);
+	Serial.print("dig_P2 = ");
+	Serial.println(dig_P2);
+	Serial.print("dig_P3 = ");
+	Serial.println(dig_P3);
+	Serial.print("dig_P4 = ");
+	Serial.println(dig_P4);
+	Serial.print("dig_P5 = ");
+	Serial.println(dig_P5);
+	Serial.print("dig_P6 = ");
+	Serial.println(dig_P6);
+	Serial.print("dig_P7 = ");
+	Serial.println(dig_P7);
+	Serial.print("dig_P8 = ");
+	Serial.println(dig_P8);
+	Serial.print("dig_P9 = ");
+	Serial.println(dig_P9);
+	delay(4000);
 }
